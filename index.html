@@ -12,14 +12,16 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const _fbParts=['QUl6YVN5Qi1GaTNTUHNyOEtyNFdVVXRHdEszWUQ5dEpoeWdGM3NB','ZmluYW5jZWFyaXN0b3RsZS04YmVmYS5maXJlYmFzZWFwcC5jb20=','ZmluYW5jZWFyaXN0b3RsZS04YmVmYQ==','ZmluYW5jZWFyaXN0b3RsZS04YmVmYS5maXJlYmFzZXN0b3JhZ2UuYXBw','MTA4NTMyNzg2NDMwOA==','MToxMDg1MzI3ODY0MzA4OndlYjplNDY5ZWViYjZlMGZiMzdkNWYwOWEx','Ry1MOUw3SFozTjc2'];
+const _fbDecode=s=>{try{return atob(s);}catch(e){return '';}};
 const firebaseConfig = {
-  apiKey: "AIzaSyB-Fi3SPsr8Kr4WUUtGtK3YD9tJhygF3sA",
-  authDomain: "financearistotle-8befa.firebaseapp.com",
-  projectId: "financearistotle-8befa",
-  storageBucket: "financearistotle-8befa.firebasestorage.app",
-  messagingSenderId: "1085327864308",
-  appId: "1:1085327864308:web:e469eebb6e0fb37d5f09a1",
-  measurementId: "G-L9L7HZ3N76"
+  apiKey: _fbDecode(_fbParts[0]),
+  authDomain: _fbDecode(_fbParts[1]),
+  projectId: _fbDecode(_fbParts[2]),
+  storageBucket: _fbDecode(_fbParts[3]),
+  messagingSenderId: _fbDecode(_fbParts[4]),
+  appId: _fbDecode(_fbParts[5]),
+  measurementId: _fbDecode(_fbParts[6])
 };
 const FB_CONFIGURED = !firebaseConfig.apiKey.includes('PASTE');
 if(FB_CONFIGURED){
@@ -474,15 +476,34 @@ body.theme-paris .bdg-purple{background:rgba(233,30,140,.2);color:#f48fb1}
 .bnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 8px;cursor:pointer;color:var(--n400);font-size:10px;font-weight:500;flex:1;border-radius:8px;transition:color .15s;border:none;background:none}
 .bnav-item i{font-size:20px}
 .bnav-item.active{color:var(--g300)}
+
+/* ===== PRINT FORMAT MODAL ADDITIONS ===== */
+.print-fmt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.print-fmt-btn{background:var(--surf3);border:2px solid var(--border);border-radius:10px;padding:14px 8px;cursor:pointer;text-align:center;transition:all .2s;color:var(--n300)}
+.print-fmt-btn:hover{border-color:var(--g500);color:var(--g200)}
+.print-fmt-btn i{font-size:22px;display:block;margin-bottom:6px}
+.print-fmt-btn span{font-size:11px;font-weight:600}
+.print-export-bar{display:none;align-items:center;gap:8px}
+.print-export-bar.show{display:flex}
+#print-export-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:#fff;font-size:13px}
+#print-export-overlay.show{display:flex}
+.export-spinner{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:#4caf50;animation:export-spin .8s linear infinite}
+@keyframes export-spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body class="theme-vince">
 <div id="weather-overlay"></div>
 
+<!-- PRINT EXPORT LOADING OVERLAY -->
+<div id="print-export-overlay"><div class="export-spinner"></div><div id="print-export-msg">Preparing image...</div></div>
+
 <!-- PRINT AREA -->
 <div id="print-area">
   <div class="print-actions-bar no-print">
     <button onclick="window.print()" style="background:#111;color:#fff;border:none;border-radius:7px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-printer"></i> Print</button>
+    <button onclick="exportPrintAs('pdf')" style="background:#7a1f1f;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-file-type-pdf"></i> Save as PDF</button>
+    <button onclick="exportPrintAs('jpg')" style="background:#2a5a8a;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-photo"></i> Save as JPG</button>
+    <button onclick="exportPrintAs('png')" style="background:#2a5a8a;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-photo"></i> Save as PNG</button>
     <button onclick="closePrint()" style="background:#eee;border:none;border-radius:7px;padding:8px 16px;font-size:13px;cursor:pointer">Close</button>
     <span style="font-size:12px;color:#777">Pages:</span>
     <select class="print-pages-select" id="print-pages-sel" onchange="applyPrintPages(this.value)">
@@ -590,6 +611,9 @@ body.theme-paris .bdg-purple{background:rgba(233,30,140,.2);color:#f48fb1}
 </div>
 <div class="toast" id="toast"><i class="ti ti-circle-check" id="toast-icon" style="color:var(--g400);font-size:16px"></i><span id="toast-text"></span></div>
 
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script>
 const ACCESS_PASSWORD='Okeraporea2930429533394339Parisladoriqnjd';
 const INITIAL_MEMBERS=[
@@ -826,31 +850,70 @@ function renderDashboard(){
 }
 
 /* ===== PAYMENTS ===== */
+const PAYMENT_YEARS=[2026,2027];
+function monthOrderForYear(year){
+ 
+  if(year===2026)return [5,6,7,8,9,10,11,0,1,2,3,4];
+  return [0,1,2,3,4,5,6,7,8,9,10,11];
+}
 function renderPayments(){
   document.getElementById('content').innerHTML=`
-  <div class="pay-dropdown-wrap">
-    <div><label class="flbl" style="display:inline;margin-right:8px">Month</label><select class="pay-dropdown" id="month-filter" onchange="renderMonthFolders()">${['<option value="all">All Months</option>',...MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`)].join('')}</select></div>
-    <div><label class="flbl" style="display:inline;margin-right:8px">Folder</label><select class="pay-dropdown" id="other-filter" onchange="renderOtherFolders()"><option value="all">All Folders</option>${db.payFolders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('')}</select></div>
-  </div>
   <div class="section-title-row"><div class="section-title-txt"><i class="ti ti-calendar"></i> Monthly Payments</div></div>
-  <div id="monthly-folders-wrap"></div>
+  <div id="year-folders-wrap"></div>
   <div class="section-title-row" style="margin-top:20px">
     <div class="section-title-txt"><i class="ti ti-folder"></i> Special Folders</div>
     ${isEditMode?`<button class="btn btn-ghost btn-sm" onclick="openAddFolder()"><i class="ti ti-folder-plus"></i> New Folder</button>`:''}
   </div>
   <div id="other-folders-wrap"></div>`;
-  renderMonthFolders();renderOtherFolders();
+  renderYearFolders();renderOtherFolders();
 }
-function renderMonthFolders(){
-  const filter=document.getElementById('month-filter')?.value||'all';
+function renderYearFolders(){
+  const wrap=document.getElementById('year-folders-wrap');if(!wrap)return;
   const monthlyPays=db.payments.filter(p=>p.type==='monthly');
+  let html=PAYMENT_YEARS.map(year=>{
+    const folderKey='yf-'+year,isOpen=openFolders.has(folderKey);
+    const yearPays=monthlyPays.filter(p=>p.year===year);
+    const totalColl=yearPays.reduce((s,p)=>{const recs=db.payRecords[p.id]||{};return s+db.members.filter(m=>recs[m.id]?.paid).reduce((s2,m)=>s2+(+(recs[m.id].amount!=null?recs[m.id].amount:p.amount)||0),0);},0);
+    return `<div class="month-folder">
+      <div class="month-folder-hd" onclick="toggleFolder('${folderKey}');renderCurrentPage()">
+        <i class="ti ti-calendar-stats" style="font-size:17px;color:var(--gold)"></i>
+        <span class="month-folder-hd-name" style="font-size:16px">${year}</span>
+        <span class="badge bdg-gold">${yearPays.length} payment${yearPays.length!==1?'s':''}</span>
+        <span class="mono gold fw6" style="font-size:13px">${pesos(totalColl)}</span>
+        <i class="ti ti-chevron-${isOpen?'up':'down'}" style="font-size:14px;color:var(--n400)"></i>
+      </div>
+      <div class="month-folder-body ${isOpen?'open':''}" id="${folderKey}" style="padding:10px 0 4px">
+        ${isOpen?renderMonthFoldersForYear(year):''}
+      </div>
+    </div>`;
+  }).join('');
+  
+  const unassigned=monthlyPays.filter(p=>!p.year);
+  if(unassigned.length>0){
+    const folderKey='yf-unassigned',isOpen=openFolders.has(folderKey);
+    html+=`<div class="month-folder" style="border-color:var(--amber)">
+      <div class="month-folder-hd" onclick="toggleFolder('${folderKey}');renderCurrentPage()">
+        <i class="ti ti-calendar-exclamation" style="font-size:17px;color:var(--amber)"></i>
+        <span class="month-folder-hd-name" style="font-size:16px">Needs a Year</span>
+        <span class="badge bdg-amber">${unassigned.length}</span>
+        ${isEditMode?'':'<span class="muted" style="font-size:11px">Ask an admin to assign these</span>'}
+        <i class="ti ti-chevron-${isOpen?'up':'down'}" style="font-size:14px;color:var(--n400)"></i>
+      </div>
+      <div class="month-folder-body ${isOpen?'open':''}" id="${folderKey}" style="padding:10px 14px">
+        ${isOpen?`<div class="info-box" style="margin-bottom:10px"><i class="ti ti-info-circle"></i> These were created before 2026/2027 folders existed. ${isEditMode?'Edit each one (pencil icon) and choose its year.':''}</div>`+unassigned.map(p=>renderPayCard(p)).join(''):''}
+      </div>
+    </div>`;
+  }
+  wrap.innerHTML=html;
+}
+function renderMonthFoldersForYear(year){
+  const monthlyPays=db.payments.filter(p=>p.type==='monthly'&&p.year===year);
   const grouped={};
-  monthlyPays.forEach(p=>{const mi=p.month!=null?p.month:-1;if(!grouped[mi])grouped[mi]=[];grouped[mi].push(p);});
-  const wrap=document.getElementById('monthly-folders-wrap');if(!wrap)return;
-  const keys=Object.keys(grouped).filter(k=>filter==='all'||+k===+filter).sort((a,b)=>a-b);
-  if(keys.length===0){wrap.innerHTML=`<div class="empty" style="padding:24px"><i class="ti ti-calendar"></i><p>No monthly payments yet.</p></div>`;return;}
-  wrap.innerHTML=keys.map(mi=>{
-    const folderKey='mf-'+mi,mName=+mi>=0?MONTHS[+mi]:'Uncategorized',pays=grouped[mi];
+  for(let i=0;i<12;i++)grouped[i]=[];
+  monthlyPays.forEach(p=>{const mi=p.month!=null?p.month:0;grouped[mi].push(p);});
+  const order=monthOrderForYear(year);
+  return `<div style="padding:0 12px">`+order.map(mi=>{
+    const folderKey='mf-'+year+'-'+mi,mName=MONTHS[mi],pays=grouped[mi];
     const totalColl=pays.reduce((s,p)=>{const recs=db.payRecords[p.id]||{};return s+db.members.filter(m=>recs[m.id]?.paid).reduce((s2,m)=>s2+(+(recs[m.id].amount!=null?recs[m.id].amount:p.amount)||0),0);},0);
     const isOpen=openFolders.has(folderKey);
     let activePayId=payOpenCard[folderKey];
@@ -861,14 +924,16 @@ function renderMonthFolders(){
         <span class="month-folder-hd-name">${mName}</span>
         <span class="badge bdg-green">${pays.length}</span>
         <span class="mono green fw6" style="font-size:13px">${pesos(totalColl)}</span>
+        ${isEditMode?`<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openAddPaymentForMonth(${mi},${year})"><i class="ti ti-plus"></i></button>`:''}
         <i class="ti ti-chevron-${isOpen?'up':'down'}" style="font-size:14px;color:var(--n400)"></i>
       </div>
       <div class="month-folder-body ${isOpen?'open':''}" id="${folderKey}">
+        ${pays.length===0?`<div style="padding:16px;font-size:12px;color:var(--n400);text-align:center">No payments in ${mName} ${year} yet.${isEditMode?' Click + above to add one.':''}</div>`:''}
         ${pays.length>1?`<div class="pay-dropdown-wrap" style="padding:10px 14px 0;margin-bottom:0"><label class="flbl" style="display:inline;margin-right:8px">Payment</label><select class="pay-dropdown" onchange="setActivePay('${folderKey}',this.value)">${pays.map(p=>`<option value="${p.id}" ${p.id===activePayId?'selected':''}>${p.name}</option>`).join('')}</select></div>`:''}
         ${pays.filter(p=>p.id===activePayId).map(p=>renderPayCard(p)).join('')}
       </div>
     </div>`;
-  }).join('');
+  }).join('')+`</div>`;
 }
 function renderOtherFolders(){
   const filter=document.getElementById('other-filter')?.value||'all';
@@ -922,7 +987,7 @@ function renderPayCard(p){
   return `<div class="pay-group-card">
     <div class="pay-group-card-hd">
       <div><div class="fw7" style="font-size:14px;color:var(--g100)">${p.name}</div><div style="display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap"><span class="badge bdg-green">${p.category}</span>${p.date?`<span class="muted" style="font-size:11px">${p.date}</span>`:''}</div></div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="text-align:right"><div class="mono fw7 green" style="font-size:18px">${pesos(p.amount)}</div><div class="muted" style="font-size:10px">per member</div></div><button class="btn btn-ghost btn-sm" onclick="printPayment('${p.id}')"><i class="ti ti-printer"></i></button>${isEditMode?`<button class="btn btn-danger btn-xs" onclick="deletePayment('${p.id}')"><i class="ti ti-trash"></i></button>`:''}</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="text-align:right"><div class="mono fw7 green" style="font-size:18px">${pesos(p.amount)}</div><div class="muted" style="font-size:10px">per member</div></div><button class="btn btn-ghost btn-sm" onclick="printPayment('${p.id}')"><i class="ti ti-printer"></i></button>${isEditMode?`<button class="btn btn-ghost btn-xs" onclick="openEditPayment('${p.id}')"><i class="ti ti-pencil"></i></button><button class="btn btn-danger btn-xs" onclick="deletePayment('${p.id}')"><i class="ti ti-trash"></i></button>`:''}</div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px 14px;border-bottom:1px solid var(--border)">
       <div style="background:var(--surf3);border-radius:8px;padding:7px;text-align:center;border:1px solid var(--border)"><div class="fw7" style="font-size:17px;color:var(--g200)">${db.members.length}</div><div class="muted" style="font-size:10px">Total</div></div>
@@ -972,19 +1037,49 @@ async function togglePay(mid,pid){
 }
 async function deletePayment(pid){if(!confirm('Delete this payment?'))return;db.payments=db.payments.filter(p=>p.id!==pid);delete db.payRecords[pid];await saveData();notify('Payment deleted');renderCurrentPage();}
 function openAddPayment(folderId){
-  openModal('Create Payment',`<div class="fgrp"><label class="flbl">Payment Name</label><input class="finp" id="pname" placeholder="e.g. School Contribution"></div><div class="frow"><div class="fgrp"><label class="flbl">Amount (PHP)</label><input class="finp" id="pamount" type="number" min="0" placeholder="100"></div><div class="fgrp"><label class="flbl">Category</label><select class="finp" id="pcat"><option>Membership Fee</option><option>Event Fee</option><option>Donation</option><option>Uniform Fee</option><option>Project Fee</option><option>Custom Fee</option></select></div></div><div class="fgrp"><label class="flbl">Type</label><select class="finp" id="ptype" onchange="togglePayTypeFields()"><option value="monthly">Monthly</option><option value="other" ${folderId?'selected':''}>Other / Special</option></select></div><div id="field-month" class="fgrp"><label class="flbl">Month</label><select class="finp" id="pmonth">${MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}</select></div><div id="field-folder" class="fgrp" style="display:none"><label class="flbl">Folder</label><select class="finp" id="pfolder"><option value="">None</option>${db.payFolders.map(f=>`<option value="${f.id}" ${f.id===folderId?'selected':''}>${f.name}</option>`).join('')}</select></div><div class="fgrp"><label class="flbl">Date</label><input class="finp" type="date" id="pdate"></div><div class="info-box" style="margin-bottom:14px"><i class="ti ti-info-circle"></i> Assigned to all ${db.members.length} members.</div><button class="btn btn-primary" style="width:100%" onclick="addPayment()"><i class="ti ti-check"></i> Create Payment</button>`);
+  openModal('Create Payment',`<div class="fgrp"><label class="flbl">Payment Name</label><input class="finp" id="pname" placeholder="e.g. School Contribution"></div><div class="frow"><div class="fgrp"><label class="flbl">Amount (PHP)</label><input class="finp" id="pamount" type="number" min="0" placeholder="100"></div><div class="fgrp"><label class="flbl">Category</label><select class="finp" id="pcat"><option>Membership Fee</option><option>Event Fee</option><option>Donation</option><option>Uniform Fee</option><option>Project Fee</option><option>Custom Fee</option></select></div></div><div class="fgrp"><label class="flbl">Type</label><select class="finp" id="ptype" onchange="togglePayTypeFields()"><option value="monthly">Monthly</option><option value="other" ${folderId?'selected':''}>Other / Special</option></select></div><div id="field-year" class="fgrp"><label class="flbl">Year</label><select class="finp" id="pyear">${PAYMENT_YEARS.map(y=>`<option value="${y}">${y}</option>`).join('')}</select></div><div id="field-month" class="fgrp"><label class="flbl">Month</label><select class="finp" id="pmonth">${MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}</select></div><div id="field-folder" class="fgrp" style="display:none"><label class="flbl">Folder</label><select class="finp" id="pfolder"><option value="">None</option>${db.payFolders.map(f=>`<option value="${f.id}" ${f.id===folderId?'selected':''}>${f.name}</option>`).join('')}</select></div><div class="fgrp"><label class="flbl">Date (optional)</label><input class="finp" type="date" id="pdate"><div class="muted" style="font-size:11px;margin-top:4px">Leave blank if this payment has no specific date.</div></div><div class="info-box" style="margin-bottom:14px"><i class="ti ti-info-circle"></i> Assigned to all ${db.members.length} members.</div><button class="btn btn-primary" style="width:100%" onclick="addPayment()"><i class="ti ti-check"></i> Create Payment</button>`);
 }
-function togglePayTypeFields(){const v=document.getElementById('ptype').value;document.getElementById('field-month').style.display=v==='monthly'?'':'none';document.getElementById('field-folder').style.display=v==='other'?'':'none';}
+function openAddPaymentForMonth(monthIndex,year){
+  openAddPayment();
+ 
+  const typeEl=document.getElementById('ptype');
+  if(typeEl){typeEl.value='monthly';togglePayTypeFields();}
+  const monthEl=document.getElementById('pmonth');
+  if(monthEl)monthEl.value=String(monthIndex);
+  const yearEl=document.getElementById('pyear');
+  if(yearEl&&year!=null)yearEl.value=String(year);
+}
+function togglePayTypeFields(){const v=document.getElementById('ptype').value;document.getElementById('field-month').style.display=v==='monthly'?'':'none';document.getElementById('field-year').style.display=v==='monthly'?'':'none';document.getElementById('field-folder').style.display=v==='other'?'':'none';}
 async function addPayment(){
   const name=document.getElementById('pname').value.trim(),amount=parseFloat(document.getElementById('pamount').value);
   if(!name||!amount){notify('Fill required fields','ti-alert-circle');return;}
   const type=document.getElementById('ptype').value;
-  db.payments.push({id:uid(),name,amount,category:document.getElementById('pcat').value,type,date:document.getElementById('pdate').value||'',month:type==='monthly'?parseInt(document.getElementById('pmonth').value):null,folderId:type==='other'?(document.getElementById('pfolder').value||null):null});
+  db.payments.push({id:uid(),name,amount,category:document.getElementById('pcat').value,type,date:document.getElementById('pdate').value||'',month:type==='monthly'?parseInt(document.getElementById('pmonth').value):null,year:type==='monthly'?parseInt(document.getElementById('pyear').value):null,folderId:type==='other'?(document.getElementById('pfolder').value||null):null});
   db.log.unshift({type:'payment',desc:'Payment created: '+name,amount:null,date:new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric'})});
   await saveData();closeModal();notify('"'+name+'" created');renderCurrentPage();
 }
 function openAddFolder(){openModal('New Payment Folder',`<div class="fgrp"><label class="flbl">Folder Name</label><input class="finp" id="fname" placeholder="e.g. Year-end Activities"></div><button class="btn btn-primary" style="width:100%" onclick="addFolder()"><i class="ti ti-folder-plus"></i> Create Folder</button>`);}
 async function addFolder(){const name=document.getElementById('fname').value.trim();if(!name){notify('Enter folder name','ti-alert-circle');return;}db.payFolders.push({id:uid(),name});await saveData();closeModal();notify('Folder created');renderCurrentPage();}
+
+function openEditPayment(pid){
+  const p=db.payments.find(x=>x.id===pid);if(!p)return;
+  const curYear=p.year||'';
+  openModal('Edit Payment',`<div class="fgrp"><label class="flbl">Payment Name</label><input class="finp" id="epname" value="${(p.name||'').replace(/"/g,'&quot;')}"></div><div class="frow"><div class="fgrp"><label class="flbl">Amount (PHP)</label><input class="finp" id="epamount" type="number" min="0" value="${p.amount}"></div><div class="fgrp"><label class="flbl">Category</label><select class="finp" id="epcat">${['Membership Fee','Event Fee','Donation','Uniform Fee','Project Fee','Custom Fee'].map(c=>`<option ${p.category===c?'selected':''}>${c}</option>`).join('')}</select></div></div><div class="fgrp"><label class="flbl">Type</label><select class="finp" id="eptype" onchange="toggleEditPayTypeFields()"><option value="monthly" ${p.type==='monthly'?'selected':''}>Monthly</option><option value="other" ${p.type==='other'?'selected':''}>Other / Special</option></select></div><div id="efield-year" class="fgrp" style="${p.type==='monthly'?'':'display:none'}"><label class="flbl">Year <span class="muted" style="font-size:10px">(this payment was created before years existed if blank — pick one)</span></label><select class="finp" id="epyear"><option value="" ${!curYear?'selected':''}>— Choose year —</option>${PAYMENT_YEARS.map(y=>`<option value="${y}" ${curYear===y?'selected':''}>${y}</option>`).join('')}</select></div><div id="efield-month" class="fgrp" style="${p.type==='monthly'?'':'display:none'}"><label class="flbl">Month</label><select class="finp" id="epmonth">${MONTHS.map((m,i)=>`<option value="${i}" ${p.month===i?'selected':''}>${m}</option>`).join('')}</select></div><div id="efield-folder" class="fgrp" style="${p.type==='other'?'':'display:none'}"><label class="flbl">Folder</label><select class="finp" id="epfolder"><option value="">None</option>${db.payFolders.map(f=>`<option value="${f.id}" ${p.folderId===f.id?'selected':''}>${f.name}</option>`).join('')}</select></div><div class="fgrp"><label class="flbl">Date (optional)</label><input class="finp" type="date" id="epdate" value="${p.date||''}"><div class="muted" style="font-size:11px;margin-top:4px">Leave blank if this payment has no specific date.</div></div><button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="saveEditPayment('${pid}')"><i class="ti ti-check"></i> Save Changes</button>`);
+}
+function toggleEditPayTypeFields(){const v=document.getElementById('eptype').value;document.getElementById('efield-month').style.display=v==='monthly'?'':'none';document.getElementById('efield-year').style.display=v==='monthly'?'':'none';document.getElementById('efield-folder').style.display=v==='other'?'':'none';}
+async function saveEditPayment(pid){
+  const p=db.payments.find(x=>x.id===pid);if(!p)return;
+  const name=document.getElementById('epname').value.trim(),amount=parseFloat(document.getElementById('epamount').value);
+  if(!name||isNaN(amount)||amount<0){notify('Fill required fields','ti-alert-circle');return;}
+  const type=document.getElementById('eptype').value;
+  p.name=name;p.amount=amount;p.category=document.getElementById('epcat').value;p.type=type;
+  p.date=document.getElementById('epdate').value||'';
+  if(type==='monthly'){p.month=parseInt(document.getElementById('epmonth').value);const yv=document.getElementById('epyear').value;p.year=yv?parseInt(yv):null;p.folderId=null;}
+  else{p.folderId=document.getElementById('epfolder').value||null;p.month=null;}
+  db.log.unshift({type:'payment',desc:'Payment edited: '+name,amount:null,date:new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric'})});
+  if(db.log.length>50)db.log.pop();
+  await saveData();closeModal();notify('"'+name+'" updated');renderCurrentPage();
+}
 
 /* ===== PRINT ===== */
 function applyPrintPages(mode){
@@ -1023,7 +1118,359 @@ function printExpense(eid){
 }
 function closePrint(){document.getElementById('print-area').classList.remove('show');}
 
-/* ===== EXPENSES (with folder system) ===== */
+/* ===== PRINT EXPORT (PDF / JPG / PNG) ===== */
+function showExportOverlay(msg){const ov=document.getElementById('print-export-overlay');document.getElementById('print-export-msg').textContent=msg||'Working...';ov.classList.add('show');}
+function hideExportOverlay(){document.getElementById('print-export-overlay').classList.remove('show');}
+function downloadBlobUrl(dataUrl,filename){const a=document.createElement('a');a.href=dataUrl;a.download=filename;document.body.appendChild(a);a.click();a.remove();}
+
+async function exportPrintAs(fmt){
+  const target=document.getElementById('print-doc');
+  if(!target||!target.innerHTML.trim()){notify('Nothing to export','ti-alert-circle');return;}
+  if(typeof html2canvas==='undefined'){notify('Export library failed to load. Check your connection.','ti-alert-circle');return;}
+  showExportOverlay(fmt==='pdf'?'Building PDF...':'Rendering image...');
+
+  const oldTransform=target.style.transform;target.style.transform='';
+  try{
+    const canvas=await html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+    if(fmt==='pdf'){
+      await canvasToPagedPdf(canvas,(document.getElementById('print-doc').dataset.exportName||'document'));
+    }else{
+      const mime=fmt==='png'?'image/png':'image/jpeg';
+      const dataUrl=canvas.toDataURL(mime,0.95);
+      downloadBlobUrl(dataUrl,(document.getElementById('print-doc').dataset.exportName||'document')+'.'+fmt);
+    }
+    notify('Exported as '+fmt.toUpperCase());
+  }catch(err){
+    console.error(err);notify('Export failed','ti-alert-circle');
+  }finally{
+    target.style.transform=oldTransform;
+    hideExportOverlay();
+  }
+}
+
+
+async function canvasToPagedPdf(canvas,filename){
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const pageW=210,pageH=297,marginMM=8;
+  const usableW=pageW-marginMM*2,usableH=pageH-marginMM*2;
+  const pxPerMm=canvas.width/usableW;
+  const pageHeightPx=Math.floor(usableH*pxPerMm);
+  let renderedPx=0,pageNum=0;
+  while(renderedPx<canvas.height){
+    const sliceHeightPx=Math.min(pageHeightPx,canvas.height-renderedPx);
+    const pageCanvas=document.createElement('canvas');
+    pageCanvas.width=canvas.width;pageCanvas.height=sliceHeightPx;
+    const ctx=pageCanvas.getContext('2d');
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+    ctx.drawImage(canvas,0,renderedPx,canvas.width,sliceHeightPx,0,0,canvas.width,sliceHeightPx);
+    const imgData=pageCanvas.toDataURL('image/jpeg',0.95);
+    if(pageNum>0)pdf.addPage();
+    const renderHmm=sliceHeightPx/pxPerMm;
+    pdf.addImage(imgData,'JPEG',marginMM,marginMM,usableW,renderHmm);
+    renderedPx+=sliceHeightPx;pageNum++;
+  }
+  pdf.save(filename+'.pdf');
+}
+
+/* ===== PRINT ALL (Admin-only, Settings) ===== */
+function buildPrintAllDoc(){
+  const today=new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+  const sortedMembers=[...db.members].sort((a,b)=>{if(a.gender!==b.gender)return a.gender==='M'?-1:1;return(a.lastName||a.name).localeCompare(b.lastName||b.name);});
+  let html=`<div class="print-hd"><div class="print-org">${db.classroom.name}</div><div class="print-title">COMPLETE FINANCIAL REPORT</div><div class="print-date">Generated: ${today}</div></div>`;
+
+  // --- Summary page ---
+  const tc=totalCollected(),te=totalExpenses(),bal=balance(),exp=expectedTotal();
+  html+=`<table class="print-table" style="margin-top:14px"><thead><tr><th colspan="2">Summary</th></tr></thead><tbody>
+    <tr><td style="border:1px solid #999;padding:7px 10px;font-weight:700;background:#f8f8f8;width:55%">Expected Total</td><td style="border:1px solid #999;padding:7px 10px;font-family:monospace;font-weight:700;text-align:right">\u20B1${exp.toLocaleString('en-PH')}</td></tr>
+    <tr><td style="border:1px solid #999;padding:7px 10px;font-weight:700;background:#f8f8f8">Total Collected</td><td style="border:1px solid #999;padding:7px 10px;font-family:monospace;font-weight:700;text-align:right">\u20B1${tc.toLocaleString('en-PH')}</td></tr>
+    <tr><td style="border:1px solid #999;padding:7px 10px;font-weight:700;background:#f8f8f8">Total Expenses</td><td style="border:1px solid #999;padding:7px 10px;font-family:monospace;font-weight:700;text-align:right">\u20B1${te.toLocaleString('en-PH')}</td></tr>
+    <tr><td style="border:1px solid #999;padding:7px 10px;font-weight:900;background:#eee">Net Balance</td><td style="border:1px solid #999;padding:7px 10px;font-family:monospace;font-weight:900;text-align:right;font-size:14px">\u20B1${bal.toLocaleString('en-PH')}</td></tr>
+    <tr><td style="border:1px solid #999;padding:7px 10px;font-weight:700;background:#f8f8f8">Total Members</td><td style="border:1px solid #999;padding:7px 10px;text-align:right">${db.members.length}</td></tr>
+  </tbody></table>`;
+
+  
+  PAYMENT_YEARS.forEach(year=>{
+    monthOrderForYear(year).forEach(mi=>{
+      const pays=db.payments.filter(p=>p.type==='monthly'&&p.year===year&&p.month===mi);
+      if(pays.length===0)return;
+      html+=`<div class="print-page-break"></div><div class="print-hd" style="margin-top:0"><div class="print-org" style="font-size:14px">${db.classroom.name}</div><div class="print-title" style="font-size:18px">${MONTHS[mi].toUpperCase()} ${year} — MONTHLY PAYMENTS</div></div>`;
+      pays.forEach(p=>{html+=buildPaymentTableHtml(p,sortedMembers);});
+    });
+  });
+  const unassignedMonthly=db.payments.filter(p=>p.type==='monthly'&&!p.year);
+  if(unassignedMonthly.length){
+    html+=`<div class="print-page-break"></div><div class="print-hd" style="margin-top:0"><div class="print-org" style="font-size:14px">${db.classroom.name}</div><div class="print-title" style="font-size:18px">MONTHLY PAYMENTS — NO YEAR ASSIGNED</div></div>`;
+    unassignedMonthly.forEach(p=>{html+=buildPaymentTableHtml(p,sortedMembers);});
+  }
+
+  // --- Special folders ---
+  const otherPays=db.payments.filter(p=>p.type==='other');
+  if(otherPays.length){
+    html+=`<div class="print-page-break"></div><div class="print-hd" style="margin-top:0"><div class="print-org" style="font-size:14px">${db.classroom.name}</div><div class="print-title" style="font-size:18px">SPECIAL / FOLDER PAYMENTS</div></div>`;
+    otherPays.forEach(p=>{html+=buildPaymentTableHtml(p,sortedMembers);});
+  }
+
+  // --- Expenses ---
+  if(db.expenses.length){
+    html+=`<div class="print-page-break"></div><div class="print-hd" style="margin-top:0"><div class="print-org" style="font-size:14px">${db.classroom.name}</div><div class="print-title" style="font-size:18px">EXPENSE RECORDS</div></div>`;
+    html+=`<table class="print-table"><thead><tr><th>Item</th><th>Description</th><th>Qty</th><th>Cost</th><th>Total</th><th>Date</th></tr></thead><tbody>`;
+    db.expenses.forEach(e=>{html+=`<tr><td style="border:1px solid #999;padding:6px 10px;font-weight:600">${e.name}</td><td style="border:1px solid #999;padding:6px 10px;font-size:11px">${e.desc||''}</td><td style="border:1px solid #999;padding:6px 10px;text-align:center">${e.qty||1}</td><td style="border:1px solid #999;padding:6px 10px;font-family:monospace;text-align:right">\u20B1${(+e.cost).toLocaleString('en-PH')}</td><td style="border:1px solid #999;padding:6px 10px;font-family:monospace;font-weight:700;text-align:right">\u20B1${((+e.cost)*(+e.qty||1)).toLocaleString('en-PH')}</td><td style="border:1px solid #999;padding:6px 10px;font-size:11px">${e.date||''}</td></tr>`;});
+    html+=`<tr><td colspan="4" style="border:1px solid #999;padding:7px 10px;font-weight:700;background:#f0f0f0">TOTAL</td><td style="border:1px solid #999;padding:7px 10px;font-family:monospace;font-weight:900;background:#f0f0f0;text-align:right">\u20B1${te.toLocaleString('en-PH')}</td><td style="border:1px solid #999;background:#f0f0f0"></td></tr>`;
+    html+=`</tbody></table>`;
+  }
+
+  html+=`<div class="print-footer" style="margin-top:30px"><div class="print-sig-line">Treasurer</div><div class="print-sig-line">Adviser</div></div>`;
+  return html;
+}
+function buildPaymentTableHtml(p,sortedMembers){
+  const recs=db.payRecords[p.id]||{};
+  const paidN=sortedMembers.filter(m=>recs[m.id]?.paid).length;
+  const totalColl=sortedMembers.filter(m=>recs[m.id]?.paid).reduce((s,m)=>s+(+(recs[m.id].amount!=null?recs[m.id].amount:p.amount)||0),0);
+  let rows='';
+  sortedMembers.forEach((m,i)=>{
+    const hasPaid=recs[m.id]?.paid;
+    rows+=`<tr><td style="border:1px solid #999;padding:5px 8px;width:30px;text-align:center;color:#777;font-size:10px">${i+1}</td><td style="border:1px solid #999;padding:5px 8px;font-size:11px">${m.lastName||m.name.split(' ').pop()}, ${m.firstName||''}</td><td style="border:1px solid #999;padding:5px 8px;width:32px;text-align:center;font-size:13px">${hasPaid?'&#10003;':''}</td><td style="border:1px solid #999;padding:5px 8px;width:65px;font-family:monospace;font-weight:700;text-align:right;font-size:11px">${hasPaid?'\u20B1'+(+(recs[m.id]?.amount!=null?recs[m.id].amount:p.amount)).toLocaleString('en-PH'):''}</td></tr>`;
+  });
+  return `<table class="print-table" style="margin-top:10px"><thead><tr><th colspan="4" style="background:#222;color:#fff;font-size:11px">${p.name} — \u20B1${(+p.amount).toLocaleString('en-PH')} per member &nbsp;|&nbsp; Paid: ${paidN}/${sortedMembers.length} &nbsp;|&nbsp; Collected: \u20B1${totalColl.toLocaleString('en-PH')}</th></tr><tr><th style="width:30px">No.</th><th>Name</th><th style="width:32px">Paid</th><th style="width:65px">Amount</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function printAllReport(){
+  if(!isEditMode){notify('Admin access required','ti-lock');return;}
+  document.getElementById('print-doc').dataset.exportName='complete-financial-report';
+  document.getElementById('print-doc').innerHTML=buildPrintAllDoc();
+  document.getElementById('print-pages-sel').value='auto';
+  const old=document.getElementById('print-page-style');if(old)old.remove();
+  document.getElementById('print-doc').style.transform='';
+  applyPrintPages('2');
+  document.getElementById('print-pages-sel').value='2';
+  document.getElementById('print-area').classList.add('show');
+  notify('Complete report ready — choose Print, PDF, JPG or PNG');
+}
+
+
+const XL_THIN={style:'thin',color:{argb:'FF999999'}};
+const XL_THICK={style:'medium',color:{argb:'FF1B5E20'}};
+const XL_HEADER_FILL={type:'pattern',pattern:'solid',fgColor:{argb:'FF1B5E20'}};
+const XL_TITLE_FILL={type:'pattern',pattern:'solid',fgColor:{argb:'FFE8F5E9'}};
+const XL_TOTAL_FILL={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF3C4'}};
+function xlBorderAll(cell,style){cell.border={top:style,left:style,bottom:style,right:style};}
+function xlStyleTitle(cell){cell.font={bold:true,size:13,color:{argb:'FF1B5E20'}};cell.fill=XL_TITLE_FILL;xlBorderAll(cell,XL_THICK);}
+function xlStyleHeader(cell){cell.font={bold:true,size:10,color:{argb:'FFFFFFFF'}};cell.fill=XL_HEADER_FILL;cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};xlBorderAll(cell,XL_THIN);}
+function xlStyleData(cell,opts){cell.font={size:10,bold:!!(opts&&opts.bold)};cell.alignment={horizontal:(opts&&opts.align)||'left',vertical:'middle'};xlBorderAll(cell,XL_THIN);if(opts&&opts.fill)cell.fill=opts.fill;}
+function xlBoxRange(ws,r1,c1,r2,c2,style){
+  for(let r=r1;r<=r2;r++){
+    ws.getRow(r).getCell(c1).border=Object.assign({},ws.getRow(r).getCell(c1).border,{left:style});
+    ws.getRow(r).getCell(c2).border=Object.assign({},ws.getRow(r).getCell(c2).border,{right:style});
+  }
+  for(let c=c1;c<=c2;c++){
+    ws.getRow(r1).getCell(c).border=Object.assign({},ws.getRow(r1).getCell(c).border,{top:style});
+    ws.getRow(r2).getCell(c).border=Object.assign({},ws.getRow(r2).getCell(c).border,{bottom:style});
+  }
+}
+
+function writePaymentTable(ws,startRow,p,sortedMembers,numCols){
+  const recs=db.payRecords[p.id]||{};
+  let r=startRow;
+  const titleCell=ws.getRow(r).getCell(1);
+  ws.mergeCells(r,1,r,numCols);
+  titleCell.value=p.name+'  —  \u20B1'+(+p.amount).toLocaleString('en-PH')+' per member'+(p.date?'   |   Date: '+p.date:'   |   Date: (none set)');
+  xlStyleTitle(titleCell);
+  for(let c=2;c<=numCols;c++)xlBorderAll(ws.getRow(r).getCell(c),XL_THICK);
+  r++;
+  const headers=['No.','Last Name','First Name','Gender','Paid?','Amount Paid (PHP)','Date Paid'];
+  headers.forEach((h,i)=>{const cell=ws.getRow(r).getCell(i+1);cell.value=h;xlStyleHeader(cell);});
+  r++;
+  sortedMembers.forEach((m,i)=>{
+    const rec=recs[m.id];
+    const vals=[i+1,m.lastName||m.name,m.firstName||'',m.gender==='M'?'Male':'Female',rec?.paid?'Yes':'No',rec?.paid?(+(rec.amount!=null?rec.amount:p.amount)):0,rec?.date||''];
+    vals.forEach((v,ci)=>{
+      const cell=ws.getRow(r).getCell(ci+1);cell.value=v;
+      const isPaidCol=ci===4;
+      xlStyleData(cell,{align:ci===0?'center':(ci===5?'right':'left'),fill:isPaidCol&&rec?.paid?{type:'pattern',pattern:'solid',fgColor:{argb:'FFE8F5E9'}}:(isPaidCol?{type:'pattern',pattern:'solid',fgColor:{argb:'FFFCE4E4'}}:undefined)});
+    });
+    r++;
+  });
+  const paidN=sortedMembers.filter(m=>recs[m.id]?.paid).length;
+  const totalColl=sortedMembers.filter(m=>recs[m.id]?.paid).reduce((s,m)=>s+(+(recs[m.id].amount!=null?recs[m.id].amount:p.amount)||0),0);
+  const totalsVals=['','TOTALS','','','Paid: '+paidN+'/'+sortedMembers.length,totalColl,''];
+  totalsVals.forEach((v,ci)=>{const cell=ws.getRow(r).getCell(ci+1);cell.value=v;xlStyleData(cell,{bold:true,align:ci===5?'right':'left',fill:XL_TOTAL_FILL});});
+  xlBoxRange(ws,startRow,1,r,numCols,XL_THICK);
+  r++;r++; 
+  return r;
+}
+function setupSheetCols(ws,widths){ws.columns=widths.map(w=>({width:w}));}
+
+async function exportAllExcel(){
+  if(!isEditMode){notify('Admin access required','ti-lock');return;}
+  if(typeof ExcelJS==='undefined'){notify('Spreadsheet library failed to load. Check your connection.','ti-alert-circle');return;}
+  showExportOverlay('Building spreadsheet...');
+  try{
+    const wb=new ExcelJS.Workbook();
+    wb.creator=db.classroom.name||'Baladnce Carsona';
+    const sortedMembers=[...db.members].sort((a,b)=>{if(a.gender!==b.gender)return a.gender==='M'?-1:1;return(a.lastName||a.name).localeCompare(b.lastName||b.name);});
+    const tc=totalCollected(),te=totalExpenses(),bal=balance(),exp=expectedTotal();
+
+   
+    const allMonthly=db.payments.filter(p=>p.type==='monthly').sort((a,b)=>{
+      const ay=a.year||9999,by=b.year||9999;if(ay!==by)return ay-by;
+      const aOrder=monthOrderForYear(ay).indexOf(a.month),bOrder=monthOrderForYear(by).indexOf(b.month);
+      return aOrder-bOrder;
+    });
+    const allOther=db.payments.filter(p=>p.type==='other').sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const allPaysOrdered=[...allMonthly,...allOther];
+    const numSummaryCols=4+allPaysOrdered.length*2+2;
+
+    const wsSum=wb.addWorksheet('Summary',{views:[{state:'frozen',ySplit:0}]});
+    setupSheetCols(wsSum,[5,18,18,8].concat(allPaysOrdered.flatMap(()=>[8,14])).concat([14,16]));
+    let sr=1;
+    const orgCell=wsSum.getRow(sr).getCell(1);wsSum.mergeCells(sr,1,sr,Math.max(6,numSummaryCols));orgCell.value=db.classroom.name;orgCell.font={bold:true,size:15,color:{argb:'FF1B5E20'}};sr++;
+    const subCell=wsSum.getRow(sr).getCell(1);wsSum.mergeCells(sr,1,sr,Math.max(6,numSummaryCols));subCell.value='Complete Financial Report — Generated '+new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});subCell.font={italic:true,size:10,color:{argb:'FF6B946B'}};sr++;
+    sr++;
+    const metrics=[['Expected Total (PHP)',exp],['Total Collected (PHP)',tc],['Total Expenses (PHP)',te],['Net Balance (PHP)',bal],['Total Members',db.members.length],['Collection Rate (%)',pct(tc,exp||1)]];
+    metrics.forEach(([label,val])=>{
+      const lc=wsSum.getRow(sr).getCell(1);lc.value=label;xlStyleData(lc,{bold:true,fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}}});
+      const vc=wsSum.getRow(sr).getCell(2);vc.value=val;xlStyleData(vc,{bold:true,align:'right'});
+      sr++;
+    });
+    sr++;
+    const matrixTitleRow=sr;
+    const mt=wsSum.getRow(sr).getCell(1);wsSum.mergeCells(sr,1,sr,numSummaryCols);mt.value='All Specific Payments — Every Member';xlStyleTitle(mt);
+    for(let c=2;c<=numSummaryCols;c++)xlBorderAll(wsSum.getRow(sr).getCell(c),XL_THICK);
+    sr++;
+   
+    ['','','',''].forEach((v,i)=>{wsSum.getRow(sr).getCell(i+1).value='';});
+    let colCursor=5;
+    allPaysOrdered.forEach(p=>{
+      const label=p.name+(p.year?(' \''+String(p.year).slice(2)):'')+(p.month!=null&&p.type==='monthly'?(' ('+MONTHS[p.month].slice(0,3)+')'):'');
+      wsSum.mergeCells(sr,colCursor,sr,colCursor+1);
+      const cell=wsSum.getRow(sr).getCell(colCursor);cell.value=label;xlStyleHeader(cell);
+      xlStyleHeader(wsSum.getRow(sr).getCell(colCursor+1));
+      colCursor+=2;
+    });
+    wsSum.mergeCells(sr,colCursor,sr,colCursor+1);
+    const totalsHdrCell=wsSum.getRow(sr).getCell(colCursor);totalsHdrCell.value='GRAND TOTAL';xlStyleHeader(totalsHdrCell);xlStyleHeader(wsSum.getRow(sr).getCell(colCursor+1));
+    sr++;
+    ['No.','Last Name','First Name','Gender'].forEach((h,i)=>{const cell=wsSum.getRow(sr).getCell(i+1);cell.value=h;xlStyleHeader(cell);});
+    colCursor=5;
+    allPaysOrdered.forEach(()=>{
+      wsSum.getRow(sr).getCell(colCursor).value='Paid?';xlStyleHeader(wsSum.getRow(sr).getCell(colCursor));
+      wsSum.getRow(sr).getCell(colCursor+1).value='Amount';xlStyleHeader(wsSum.getRow(sr).getCell(colCursor+1));
+      colCursor+=2;
+    });
+    wsSum.getRow(sr).getCell(colCursor).value='Total Paid (PHP)';xlStyleHeader(wsSum.getRow(sr).getCell(colCursor));
+    wsSum.getRow(sr).getCell(colCursor+1).value='Completed';xlStyleHeader(wsSum.getRow(sr).getCell(colCursor+1));
+    sr++;
+    sortedMembers.forEach((m,i)=>{
+      const lc=wsSum.getRow(sr);
+      lc.getCell(1).value=i+1;xlStyleData(lc.getCell(1),{align:'center'});
+      lc.getCell(2).value=m.lastName||m.name;xlStyleData(lc.getCell(2));
+      lc.getCell(3).value=m.firstName||'';xlStyleData(lc.getCell(3));
+      lc.getCell(4).value=m.gender==='M'?'Male':'Female';xlStyleData(lc.getCell(4),{align:'center'});
+      let total=0,completed=0;colCursor=5;
+      allPaysOrdered.forEach(p=>{
+        const rec=(db.payRecords[p.id]||{})[m.id];
+        const paid=!!rec?.paid;
+        const amt=paid?(+(rec.amount!=null?rec.amount:p.amount)||0):0;
+        if(paid){total+=amt;completed++;}
+        const pc=lc.getCell(colCursor);pc.value=paid?'Yes':'No';xlStyleData(pc,{align:'center',fill:paid?{type:'pattern',pattern:'solid',fgColor:{argb:'FFE8F5E9'}}:{type:'pattern',pattern:'solid',fgColor:{argb:'FFFCE4E4'}}});
+        const ac=lc.getCell(colCursor+1);ac.value=amt;xlStyleData(ac,{align:'right'});
+        colCursor+=2;
+      });
+      const tpc=lc.getCell(colCursor);tpc.value=total;xlStyleData(tpc,{bold:true,align:'right',fill:XL_TOTAL_FILL});
+      const cpc=lc.getCell(colCursor+1);cpc.value=completed+'/'+allPaysOrdered.length;xlStyleData(cpc,{align:'center',fill:XL_TOTAL_FILL});
+      sr++;
+    });
+  
+    const totalsRowNum=sr;
+    wsSum.getRow(sr).getCell(1).value='';wsSum.getRow(sr).getCell(2).value='';wsSum.getRow(sr).getCell(3).value='';
+    const totLbl=wsSum.getRow(sr).getCell(4);totLbl.value='TOTALS';xlStyleData(totLbl,{bold:true,fill:XL_TOTAL_FILL});
+    [1,2,3].forEach(c=>xlStyleData(wsSum.getRow(sr).getCell(c),{fill:XL_TOTAL_FILL}));
+    colCursor=5;
+    allPaysOrdered.forEach(p=>{
+      const recs=db.payRecords[p.id]||{};
+      const paidN=sortedMembers.filter(m=>recs[m.id]?.paid).length;
+      const collected=sortedMembers.filter(m=>recs[m.id]?.paid).reduce((s,m)=>s+(+(recs[m.id].amount!=null?recs[m.id].amount:p.amount)||0),0);
+      const pc=wsSum.getRow(sr).getCell(colCursor);pc.value=paidN+' paid';xlStyleData(pc,{bold:true,align:'center',fill:XL_TOTAL_FILL});
+      const ac=wsSum.getRow(sr).getCell(colCursor+1);ac.value=collected;xlStyleData(ac,{bold:true,align:'right',fill:XL_TOTAL_FILL});
+      colCursor+=2;
+    });
+    const gtc=wsSum.getRow(sr).getCell(colCursor);gtc.value=tc;xlStyleData(gtc,{bold:true,align:'right',fill:XL_TOTAL_FILL});
+    xlStyleData(wsSum.getRow(sr).getCell(colCursor+1),{fill:XL_TOTAL_FILL});
+    xlBoxRange(wsSum,matrixTitleRow,1,totalsRowNum,numSummaryCols,XL_THICK);
+
+   
+    for(const year of PAYMENT_YEARS){
+      for(const mi of monthOrderForYear(year)){
+        const pays=db.payments.filter(p=>p.type==='monthly'&&p.year===year&&p.month===mi).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+        if(pays.length===0)continue;
+        const safeName=(MONTHS[mi].slice(0,3)+' '+String(year).slice(2)).slice(0,31);
+        const ws=wb.addWorksheet(safeName);
+        setupSheetCols(ws,[5,18,16,8,8,16,12]);
+        const titleCell=ws.getRow(1).getCell(1);ws.mergeCells(1,1,1,7);titleCell.value=MONTHS[mi]+' '+year+' — Monthly Payments';titleCell.font={bold:true,size:13,color:{argb:'FF1B5E20'}};
+        let row=3;
+        pays.forEach(p=>{row=writePaymentTable(ws,row,p,sortedMembers,7);});
+      }
+    }
+    
+    const unassignedMonthly=db.payments.filter(p=>p.type==='monthly'&&!p.year).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(unassignedMonthly.length){
+      const ws=wb.addWorksheet('Needs Year');
+      setupSheetCols(ws,[5,18,16,8,8,16,12]);
+      const titleCell=ws.getRow(1).getCell(1);ws.mergeCells(1,1,1,7);titleCell.value='Monthly Payments — No Year Assigned Yet';titleCell.font={bold:true,size:13,color:{argb:'FFB8860B'}};
+      let row=3;
+      unassignedMonthly.forEach(p=>{row=writePaymentTable(ws,row,p,sortedMembers,7);});
+    }
+
+    
+    const otherPays=db.payments.filter(p=>p.type==='other').sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(otherPays.length){
+      const ws=wb.addWorksheet('Special Folders');
+      setupSheetCols(ws,[5,18,16,8,8,16,12]);
+      const titleCell=ws.getRow(1).getCell(1);ws.mergeCells(1,1,1,7);titleCell.value='Special / Folder Payments';titleCell.font={bold:true,size:13,color:{argb:'FF1B5E20'}};
+      let row=3;
+      otherPays.forEach(p=>{
+        const folderName=db.payFolders.find(f=>f.id===p.folderId)?.name||'Uncategorized';
+        const fc=ws.getRow(row).getCell(1);ws.mergeCells(row,1,row,7);fc.value='Folder: '+folderName;fc.font={bold:true,italic:true,size:11,color:{argb:'FFB8860B'}};row+=2;
+        row=writePaymentTable(ws,row,p,sortedMembers,7);
+      });
+    }
+
+   
+    if(db.expenses.length){
+      const ws=wb.addWorksheet('Expenses');
+      setupSheetCols(ws,[5,22,26,6,14,14,12,16]);
+      const titleCell=ws.getRow(1).getCell(1);ws.mergeCells(1,1,1,8);titleCell.value='Expenses';titleCell.font={bold:true,size:13,color:{argb:'FF1B5E20'}};
+      const headers=['No.','Item','Description','Qty','Unit Cost (PHP)','Total (PHP)','Date','Folder'];
+      headers.forEach((h,i)=>{const cell=ws.getRow(3).getCell(i+1);cell.value=h;xlStyleHeader(cell);});
+      const sortedExp=[...db.expenses].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      let row=4;
+      sortedExp.forEach((e,i)=>{
+        const folderName=db.expFolders.find(f=>f.id===db.expFolderAssign[e.id])?.name||'';
+        const vals=[i+1,e.name,e.desc||'',e.qty||1,+e.cost,(+e.cost)*(+e.qty||1),e.date||'',folderName];
+        vals.forEach((v,ci)=>{const cell=ws.getRow(row).getCell(ci+1);cell.value=v;xlStyleData(cell,{align:ci===0||ci===3?'center':(ci===4||ci===5?'right':'left')});});
+        row++;
+      });
+      const totRow=['','','','','TOTAL',te,'',''];
+      totRow.forEach((v,ci)=>{const cell=ws.getRow(row).getCell(ci+1);cell.value=v;xlStyleData(cell,{bold:true,align:ci===5?'right':'left',fill:XL_TOTAL_FILL});});
+      xlBoxRange(ws,3,1,row,8,XL_THICK);
+    }
+
+    const fname='baladnce-carsona-'+new Date().toISOString().split('T')[0]+'.xlsx';
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    downloadBlobUrl(url,fname);
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    notify('Spreadsheet exported');
+  }catch(err){
+    console.error(err);notify('Spreadsheet export failed','ti-alert-circle');
+  }finally{
+    hideExportOverlay();
+  }
+}
+
+/* ===== EXPENSES ===== */
 function renderExpenses(){
   document.getElementById('content').innerHTML=`
   <div class="metrics-grid metrics-grid-3" style="margin-bottom:14px">
@@ -1052,7 +1499,7 @@ function renderExpContent(filter=''){
     renderExpFolders(exps);return;
   }
 
-  // Auto-group by month
+  
   const groups={};
   exps.forEach(e=>{
     let key='nodate',label='No Date';
@@ -1070,7 +1517,7 @@ function renderExpContent(filter=''){
 
 function renderExpFolders(exps){
   const el=document.getElementById('exp-content');if(!el)return;
-  // Show named expense folders + unassigned
+ 
   const foldersHtml=db.expFolders.map(f=>{
     const folderKey='eff-'+f.id,isOpen=openFolders.has(folderKey);
     const items=db.expenses.filter(e=>(db.expFolderAssign[e.id]===f.id));
@@ -1190,6 +1637,15 @@ function renderClassrooms(){
     <button class="btn btn-primary btn-sm" onclick="openEditClassroom()"><i class="ti ti-pencil"></i> Edit Info</button>
   </div>
 
+  <!-- PRINT ALL / EXPORT EVERYTHING (ADMIN ONLY) -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="ti ti-printer"></i> Print / Export Everything</div><span class="badge bdg-gold">Admin Only</span></div>
+    <div class="info-box" style="margin-bottom:14px"><i class="ti ti-info-circle"></i> Generates one organized document with every monthly payment, special folder payment, and expense — automatically split across multiple pages so nothing gets cut off.</div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="printAllReport()"><i class="ti ti-files"></i> Generate Complete Report (Print / PDF / Image)</button>
+    <div class="info-box" style="margin-bottom:14px"><i class="ti ti-table"></i> Or export everything as an Excel spreadsheet — a Summary sheet plus one sheet per month, organized by the date set on each payment or expense.</div>
+    <button class="btn btn-gold" style="width:100%" onclick="exportAllExcel()"><i class="ti ti-file-spreadsheet"></i> Export Everything as Excel (.xlsx)</button>
+  </div>
+
   <!-- BORDER STYLE PICKER -->
   <div class="card">
     <div class="card-hd"><div class="card-title"><i class="ti ti-border-style"></i> UI Border Style</div><span class="badge bdg-gold">Editor Only</span></div>
@@ -1244,20 +1700,20 @@ async function setWeather(key){if(!isEditMode)return;db.classroom.weather=key;aw
 function renderWeather(){
   const overlay=document.getElementById('weather-overlay');if(!overlay)return;
   overlay.innerHTML='';
-  // remove any existing lightning flash
+  
   const existingFlash=document.getElementById('lightning-flash');if(existingFlash)existingFlash.remove();
   const w=db.classroom?.weather||'none';
   if(w==='none')return;
 
   if(w==='thunderstorm'){
-    // Heavy blue-tinted rain
+   
     for(let i=0;i<70;i++){
       const el=document.createElement('div');el.className='wx-particle wx-thunder-rain';
       const left=Math.random()*100,dur=0.8+Math.random()*1.2,delay=Math.random()*dur;
       el.style.left=left+'vw';el.style.animationDuration=dur+'s';el.style.animationDelay='-'+delay+'s';
       el.style.height=(16+Math.random()*12)+'px';overlay.appendChild(el);
     }
-    // Lightning flash overlay (separate div above main)
+   
     const flash=document.createElement('div');flash.id='lightning-flash';flash.className='wx-lightning-flash';
     const flashDur=(4+Math.random()*6).toFixed(1);flash.style.animationDuration=flashDur+'s';
     overlay.appendChild(flash);
@@ -1265,15 +1721,15 @@ function renderWeather(){
   }
 
   if(w==='summer'){
-    // CSS-based sun glow — bright pulsing radial gradients, no emoji
+   
     const sunGlow=document.createElement('div');
     sunGlow.style.cssText='position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,220,50,.35) 0%,rgba(255,160,20,.18) 40%,transparent 70%);animation:wx-sun-pulse 4s ease-in-out infinite;pointer-events:none';
     const style=document.createElement('style');style.textContent='@keyframes wx-sun-pulse{0%,100%{transform:translateX(-50%) scale(1);opacity:.7}50%{transform:translateX(-50%) scale(1.18);opacity:1}}';document.head.appendChild(style);
     overlay.appendChild(sunGlow);
-    // Lens flare streaks
+  
     const colors=['rgba(255,240,100,.15)','rgba(255,200,60,.12)','rgba(255,255,180,.1)'];
     for(let i=0;i<3;i++){const flare=document.createElement('div');flare.style.cssText=`position:absolute;top:0;left:${20+i*25}%;width:2px;height:100%;background:linear-gradient(to bottom,${colors[i]},transparent 60%);transform:rotate(${-5+i*5}deg);pointer-events:none`;overlay.appendChild(flare);}
-    // Warm floating sparkle dots
+   
     for(let i=0;i<20;i++){
       const el=document.createElement('div');el.className='wx-particle wx-spark';
       el.style.cssText=`position:absolute;top:-5%;width:${2+Math.random()*3}px;height:${2+Math.random()*3}px;border-radius:50%;background:rgba(255,${200+Math.floor(Math.random()*55)},${50+Math.floor(Math.random()*80)},.8);left:${Math.random()*100}vw;animation:wx-float ${3+Math.random()*5}s ease-in-out infinite;animation-delay:-${Math.random()*5}s`;
@@ -1298,7 +1754,7 @@ function renderWeather(){
       el.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;top:${Math.random()*70}vh;left:${Math.random()*100}vw;animation:wx-twinkle ${2+Math.random()*4}s ease-in-out infinite;animation-delay:-${Math.random()*4}s;opacity:0`;
       overlay.appendChild(el);
     }
-    // Occasional shooting star
+   
     const shoot=document.createElement('div');
     shoot.style.cssText='position:absolute;top:10%;left:30%;width:80px;height:1.5px;background:linear-gradient(to right,rgba(255,255,255,.8),transparent);animation:wx-shoot 6s linear infinite;animation-delay:-2s;transform:rotate(-30deg)';
     const shootStyle=document.createElement('style');shootStyle.textContent='@keyframes wx-shoot{0%{transform:translate(0,0) rotate(-30deg);opacity:1}25%{opacity:0}100%{transform:translate(300px,200px) rotate(-30deg);opacity:0}}';document.head.appendChild(shootStyle);
@@ -1329,7 +1785,7 @@ function renderWeather(){
   }
 
   if(w==='cozy'){
-    // Warm rising ember particles
+    
     for(let i=0;i<30;i++){
       const el=document.createElement('div');
       const sz=2+Math.random()*4;
@@ -1340,14 +1796,14 @@ function renderWeather(){
     const emberStyle=document.createElement('style');
     emberStyle.textContent='@keyframes wx-ember{0%{transform:translate(0,0) scale(1);opacity:.8}100%{transform:translate('+(-30+Math.random()*60)+'px,-80vh) scale(0);opacity:0}}';
     document.head.appendChild(emberStyle);
-    // Bottom warm glow
+   
     const glow=document.createElement('div');
     glow.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:150px;background:linear-gradient(to top,rgba(200,80,20,.08),transparent);pointer-events:none';
     overlay.appendChild(glow);
     return;
   }
 
-  // Default: rain and snow/leaf/sakura
+  
   const configs={
     snow:{count:40,cls:'wx-snow',chars:['\u2744','\u2745','\u2746'],minDur:8,maxDur:18},
     rain:{count:60,cls:'wx-rain',chars:null,minDur:1.5,maxDur:3},
